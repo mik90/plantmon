@@ -16,9 +16,6 @@ constexpr auto SRAM_CS = 11;
 constexpr auto EPD_RESET = 5;
 constexpr auto EPD_BUSY = 7;
 
-#define COLOR1 EPD_BLACK
-#define COLOR2 EPD_RED
-
 Adafruit_IL0373 display(212, 104, EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
 hp_BH1750 lightMeter;
 
