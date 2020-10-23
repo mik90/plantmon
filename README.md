@@ -10,7 +10,7 @@ YL-69 soil moisture sensor to check plant health
 
 ### Light sensor
 [BH1750](https://www.adafruit.com/product/4681)
-[Arduino C++ Library: "BH1750"](https://github.com/claws/BH1750)
+[Arduino C++ Library: "hp_BH1750"](https://github.com/Starmbi/hp_BH1750)
 
 ### Display
 [eInk display](https://www.adafruit.com/product/4086)

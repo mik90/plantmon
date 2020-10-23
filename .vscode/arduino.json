@@ -1,3 +1,6 @@
 {
-    "sketch": "plant-monitor.ino"
+    "sketch": "plant-monitor.ino",
+    "board": "arduino:samd:nano_33_iot",
+    "programmer": "Parallel Programmer",
+    "output": "build"
 }

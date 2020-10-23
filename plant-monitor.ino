@@ -1,7 +1,7 @@
 #include <Adafruit_EPD.h>
 #include <Arduino.h>
-#include <BH1750.h>
 #include <Wire.h>
+#include <hp_BH1750.h>
 
 constexpr byte humidity_sensor_pin = A1;
 constexpr byte humidity_sensor_vcc = 6;
@@ -20,7 +20,7 @@ constexpr auto EPD_BUSY = 7;
 #define COLOR2 EPD_RED
 
 Adafruit_IL0373 display(212, 104, EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
-BH1750 lightMeter;
+hp_BH1750 lightMeter;
 
 void testdrawtext(char* text, uint16_t color);
 
@@ -36,7 +36,7 @@ void setup() {
   }
   delay(1000);
   Serial.begin(baud_rate);
-  lightMeter.begin();
+  const bool ready = lightMeter.begin(BH1750_TO_GROUND);
 
   {
     // Display "hello world" for 5 seconds
@@ -61,30 +61,47 @@ void setup() {
   }
 }
 
-/**
- * Soil moisture range
- * Min: ~121 in air (dry)
- * Max: ~510 in glass of water
- * TODO map value to 0-100%
- */
 int read_humidity_sensor() {
   digitalWrite(humidity_sensor_vcc, HIGH);
   delay(500);
-  int value = analogRead(humidity_sensor_pin);
+  const int value = analogRead(humidity_sensor_pin);
   digitalWrite(humidity_sensor_vcc, LOW);
   return 1023 - value;
 }
 
+// Soil moisture range
+constexpr int measured_moisture_min = 120; // Measured in air (dry)
+constexpr int measured_moisture_max = 510; // Measured in a glass of water
+
+int get_moisture_percentage() {
+  const auto unadjusted_range = read_humidity_sensor();
+  // Limit values between the measaured range just to be sure
+  const auto constrained_range =
+      constrain(unadjusted_range, measured_moisture_min, measured_moisture_max);
+  // Map the range to a percentage
+  const auto moisture_percentage =
+      map(constrained_range, measured_moisture_min, measured_moisture_max, 0, 100);
+
+  return moisture_percentage;
+}
+
 void loop() {
-  Serial.print("Humidity Level (0-1023): ");
-  Serial.println(read_humidity_sensor());
+  {
+    Serial.print("Humidity: ");
+    const auto moisture_perc = get_moisture_percentage();
+    Serial.print(moisture_perc);
+    Serial.println("%");
+    // Have to wait 10 seconds per humidity measurement
+    delay(ten_seconds_ms);
+  }
 
-  const float lux = lightMeter.readLightLevel();
-  Serial.print("Light: ");
-  Serial.print(lux);
-  Serial.print("lux");
-
-  delay(ten_seconds_ms);
+  {
+    lightMeter.start();
+    const float lux = lightMeter.getLux();
+    Serial.print("Light: ");
+    Serial.print(lux);
+    Serial.println("lux");
+  }
 }
 
 void testdrawtext(const char* text, uint16_t color) {
