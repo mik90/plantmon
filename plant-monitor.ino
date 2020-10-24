@@ -19,8 +19,6 @@ constexpr auto EPD_BUSY = 7;
 Adafruit_IL0373 display(212, 104, EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
 hp_BH1750 lightMeter;
 
-void testdrawtext(char* text, uint16_t color);
-
 void setup() {
   // Init the humidity sensor board
   pinMode(humidity_sensor_vcc, OUTPUT);
@@ -39,7 +37,7 @@ void setup() {
     // Display "hello world" for 5 seconds
     display.begin();
     display.clearBuffer();
-    testdrawtext("Hello world", EPD_BLACK);
+    draw_text("Hello world", EPD_BLACK);
     display.display();
     delay(five_seconds_ms);
     display.clearBuffer();
@@ -101,7 +99,7 @@ void loop() {
   }
 }
 
-void testdrawtext(const char* text, uint16_t color) {
+void draw_text(const char* text, uint16_t color) {
   display.setCursor(0, 0);
   display.setTextColor(color);
   display.setTextWrap(true);

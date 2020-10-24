@@ -1,0 +1,26 @@
+{
+    "configurations": [
+        {
+            "name": "Arduino",
+            "includePath": [
+                "~/.arduino15/packages/arduino/hardware/samd/1.8.9/cores/arduino"
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": false,
+                "path": [
+                "~/.arduino15/packages/arduino/hardware/samd/1.8.9/cores/arduino",
+                "~/.arduino15/packages/arduino/hardware/samd/1.8.9/libraries/**",
+                "~/Arduino/libraries/**",
+                "${workspaceFolder}"
+                ]
+            },
+            "defines": [],
+            "compilerPath": "~/.arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/bin/arm-none-eabi-gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64"
+        }
+        
+    ],
+    "version": 4
+}
