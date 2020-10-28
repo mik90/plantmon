@@ -3,15 +3,18 @@
         {
             "name": "Arduino",
             "includePath": [
-                "~/.arduino15/packages/arduino/hardware/samd/1.8.9/cores/arduino"
+                "~/.arduino15/packages/arduino/hardware/samd/1.8.9/cores/arduino/**",
+                "~/.arduino15/packages/arduino/hardware/samd/1.8.9/cores/arduino",
+                "~/Arduino/libraries/**",
+                "${workspaceFolder}"
             ],
             "browse": {
                 "limitSymbolsToIncludedHeaders": false,
                 "path": [
-                "~/.arduino15/packages/arduino/hardware/samd/1.8.9/cores/arduino",
-                "~/.arduino15/packages/arduino/hardware/samd/1.8.9/libraries/**",
-                "~/Arduino/libraries/**",
-                "${workspaceFolder}"
+                    "~/.arduino15/packages/arduino/hardware/samd/1.8.9/cores/arduino",
+                    "~/.arduino15/packages/arduino/hardware/samd/1.8.9/libraries/**",
+                    "~/Arduino/libraries/**",
+                    "${workspaceFolder}"
                 ]
             },
             "defines": [],
@@ -20,7 +23,6 @@
             "cppStandard": "c++17",
             "intelliSenseMode": "gcc-x64"
         }
-        
     ],
     "version": 4
 }
