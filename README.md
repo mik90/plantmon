@@ -1,4 +1,5 @@
 ## Plant-monitor
+- Prints out the soil moisture percentage and lux values to an e-ink display
 
 ### Controller
 Arduino Nano 33 IoT (SAMD Arm-based)
@@ -12,6 +13,7 @@ YL-69 soil moisture sensor to check plant health
 
 ### Light sensor
 - Connect with I2C
+- TODO: How to wire this up? There's not many pins left
 [BH1750](https://www.adafruit.com/product/4681)
 [Arduino C++ Library: "hp_BH1750"](https://github.com/Starmbi/hp_BH1750)
 
