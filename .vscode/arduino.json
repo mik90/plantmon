@@ -1,6 +1,7 @@
 {
     "sketch": "plant-monitor.ino",
     "board": "arduino:samd:nano_33_iot",
-    "programmer": "Parallel Programmer",
-    "output": "build"
+    "programmer": "ArduinoISP",
+    "output": "build",
+    "port": "/dev/ttyACM0"
 }

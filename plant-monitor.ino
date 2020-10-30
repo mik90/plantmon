@@ -13,11 +13,11 @@ constexpr unsigned long minute_ms = 60 * second_ms;
 constexpr unsigned long ten_seconds_ms = 10 * second_ms;
 constexpr unsigned long five_seconds_ms = 5 * second_ms;
 
-constexpr auto EPD_CS = 10;
-constexpr auto EPD_DC = 9;
-constexpr auto SRAM_CS = 11;
-constexpr auto EPD_RESET = 5;
-constexpr auto EPD_BUSY = 7;
+constexpr auto EPD_CS = 10;    // ECS: Chip select D10
+constexpr auto EPD_DC = 9;     // D/C: Data/Command D9
+constexpr auto SRAM_CS = 8;    // SRCS: SRAM Chip select D8
+constexpr auto EPD_RESET = -1; // Share reset w/ Arduino
+constexpr auto EPD_BUSY = 4;   // D4
 
 Adafruit_IL0373 display(212, 104, EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
 hp_BH1750 lightMeter;
@@ -99,62 +99,73 @@ public:
 
 class Display {
 private:
-  static constexpr auto init_msg_display_x = 0;
-  static constexpr auto init_msg_display_y = 0;
-  static constexpr auto humidity_display_x = 0;
-  static constexpr auto humidity_display_y = 36;
-  static constexpr auto light_display_x = 0;
-  static constexpr auto light_display_y = 72;
-  static constexpr long display_interval_ms = 3 * minute_ms;
-  /// @brief Last time that the display was written to using millis()
+  static constexpr int16_t init_msg_display_x = 1;
+  static constexpr int16_t init_msg_display_y = 0;
+
+  static constexpr int16_t humidity_display_x = 1;
+  static constexpr int16_t humidity_display_y = 36;
+
+  static constexpr int16_t light_display_x = 1;
+  static constexpr int16_t light_display_y = 72;
+
+  static constexpr unsigned long display_write_interval_ms = 3 * minute_ms;
+
+  /**
+   *  @brief Last time that the display was written to using millis() which is milliseconds since
+   *         the program has started
+   */
   unsigned long display_write_timestamp_ms_;
+  uint32_t last_moisture_percentage_ = 0;
+  float last_lux_ = 0.0f;
 
 public:
   void setup() {
+    Serial.println("Setting up display...");
+    delay(second_ms);
     display.begin();
     display.clearBuffer();
-
-    display.setCursor(init_msg_display_x, init_msg_display_y);
-    display.setTextColor(EPD_BLACK);
-    display.setTextWrap(false);
-    display.print("plantmon init");
-    display.display();
-
-    // Display text for 5 seconds
-    delay(five_seconds_ms);
-
-    display.clearBuffer();
-    display.display();
     display_write_timestamp_ms_ = millis();
+    Serial.println("Display setup done");
   }
 
   /**
    * @brief Display gets updated here along with delaying for the recommended interval
    */
   void update(Optional<uint32_t> moisture_percentage, Optional<float> lux) {
-    bool wrote_to_display = false;
+    const auto milliseconds_since_last_write = millis() - display_write_timestamp_ms_;
+    if (milliseconds_since_last_write < display_write_interval_ms) {
+      // Must wait at least `display_write_interval_ms` ms between writes
+      const auto time_to_wait_ms = display_write_interval_ms - milliseconds_since_last_write;
+      Serial.println("Display is not ready to print!, wait " + String(time_to_wait_ms) +
+                     " more milliseconds");
+      return;
+    }
+    Serial.println("Display is ready to print");
 
-    if (moisture_percentage.has_value()) {
+    display.clearBuffer();
+    display.setTextColor(EPD_BLACK);
+    display.setTextWrap(true);
+    display.setCursor(init_msg_display_x, init_msg_display_y);
+    display.print("plantmon");
+
+    {
+      last_moisture_percentage_ = moisture_percentage.value_or(last_moisture_percentage_);
       display.setCursor(humidity_display_x, humidity_display_y);
-
-      const auto text = String("Moisture: " + String(moisture_percentage.value()) + "%");
+      const auto text = String("Moisture: " + String(last_moisture_percentage_) + "%");
       display.print(text);
-      wrote_to_display = true;
     }
 
-    if (lux.has_value()) {
+    {
+      last_lux_ = lux.value_or(last_lux_);
       display.setCursor(light_display_x, light_display_y);
-
       const auto text = String("Light: " + String(lux.value()) + " lux");
       display.print(text);
-      wrote_to_display = true;
     }
 
-    // Able to write once again
-    if (millis() - display_write_timestamp_ms_ < display_interval_ms) {
-      display.display();
-      display_write_timestamp_ms_ = millis();
-    }
+    Serial.println("Writing info to display...");
+    display.display();
+    display_write_timestamp_ms_ = millis();
+    Serial.println("Info written to display.");
   }
 };
 
@@ -168,28 +179,50 @@ public:
 mik::HumiditySensor humidity_sensor;
 mik::LightSensor light_sensor;
 mik::Display eink_display;
+using namespace mik;
+
+void wait_display_write_interval() {
+  Serial.println("Waiting for 3 min to protect display");
+  delay(minute_ms);
+  Serial.println("2 min left");
+  delay(minute_ms);
+  Serial.println("1 min left");
+  delay(minute_ms / 2);
+  Serial.println("30 sec left");
+  delay(minute_ms / 2);
+  Serial.println("Done waiting");
+}
 
 void setup() {
-  using namespace mik;
-
   Wire.begin(); // Init I2C
 
   while (!Serial) {
     // Wait for serial to be ready
   }
   delay(second_ms);
-
   Serial.begin(baud_rate);
 
+  Serial.println("Setting up sensors and display...");
+  delay(second_ms);
   humidity_sensor.setup();
-  light_sensor.setup();
-  eink_display.setup(); // Display is written to during setup
+  Serial.println("Set up humidity sensor.");
+
+  // light_sensor.setup();
+  // wait_display_write_interval();
+
+  eink_display.setup(); // Display is cleared to during setup
+
+  Serial.println("end setup()");
 }
 
 void loop() {
-  using namespace mik;
+  static uint32_t loop_count = 0;
   // Output may not always be available from the sensor, but they will be read from if so
-  eink_display.update(humidity_sensor.read(), light_sensor.read());
+  Serial.println("Loop iteration: " + String(loop_count++));
+
+  // eink_display.update(humidity_sensor.read(), light_sensor.read());
+  eink_display.update(humidity_sensor.read(), Optional<float>());
+
   // Just delay regardless to avoid using more power than needed
-  delay(five_seconds_ms);
+  delay(ten_seconds_ms);
 }

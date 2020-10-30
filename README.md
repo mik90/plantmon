@@ -20,9 +20,3 @@ YL-69 soil moisture sensor to check plant health
 [eInk display](https://www.adafruit.com/product/4086)
 [Pinout guide](https://learn.adafruit.com/adafruit-eink-display-breakouts/pinouts)
 [Arduino C++ Library: "Adafruit EPD"](https://github.com/adafruit/Adafruit_EPD)
-
-
-### TODO
-- Sensors should return optional values
-- Sensors should pass values into Display class in main loop
-- Display will update every interval regardless of new values or not

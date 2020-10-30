@@ -25,11 +25,12 @@ public:
     has_value_ = true;
   }
 
+  const T& value() const { return value_; }
   T& value() { return value_; }
 
   constexpr bool has_value() const noexcept { return has_value_; }
 
-  constexpr T value_or(T&& other) const noexcept {
+  T value_or(T other) const {
     if (has_value_) {
       return value_;
     } else {
