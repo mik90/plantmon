@@ -12,6 +12,7 @@ constexpr unsigned long second_ms = 1000;
 constexpr unsigned long minute_ms = 60 * second_ms;
 constexpr unsigned long ten_seconds_ms = 10 * second_ms;
 constexpr unsigned long five_seconds_ms = 5 * second_ms;
+constexpr unsigned long display_write_interval_ms = 3 * minute_ms;
 
 constexpr auto EPD_CS = 10;    // ECS: Chip select D10
 constexpr auto EPD_DC = 9;     // D/C: Data/Command D9
@@ -99,22 +100,30 @@ public:
 
 class Display {
 private:
+  /**
+   * @brief Coordinates for the different outputs on the display
+   *
+   *  Looks somewhat like this:
+   *  -----------------------------------------
+   *  | Plantmon                              |
+   *  |                                       |
+   *  | Moisture: 0%                          |
+   *  |                                       |
+   *  | Light: 0 lux                          |
+   *  |                                       |
+   *  -----------------------------------------
+   *
+   */
+
   static constexpr int16_t init_msg_display_x = 1;
-  static constexpr int16_t init_msg_display_y = 0;
+  static constexpr int16_t init_msg_display_y = 1;
 
   static constexpr int16_t humidity_display_x = 1;
-  static constexpr int16_t humidity_display_y = 36;
+  static constexpr int16_t humidity_display_y = 37;
 
   static constexpr int16_t light_display_x = 1;
-  static constexpr int16_t light_display_y = 72;
+  static constexpr int16_t light_display_y = 73;
 
-  static constexpr unsigned long display_write_interval_ms = 3 * minute_ms;
-
-  /**
-   *  @brief Last time that the display was written to using millis() which is milliseconds since
-   *         the program has started
-   */
-  unsigned long display_write_timestamp_ms_;
   uint32_t last_moisture_percentage_ = 0;
   float last_lux_ = 0.0f;
 
@@ -124,7 +133,6 @@ public:
     delay(second_ms);
     display.begin();
     display.clearBuffer();
-    display_write_timestamp_ms_ = millis();
     Serial.println("Display setup done");
   }
 
@@ -132,14 +140,6 @@ public:
    * @brief Display gets updated here along with delaying for the recommended interval
    */
   void update(Optional<uint32_t> moisture_percentage, Optional<float> lux) {
-    const auto milliseconds_since_last_write = millis() - display_write_timestamp_ms_;
-    if (milliseconds_since_last_write < display_write_interval_ms) {
-      // Must wait at least `display_write_interval_ms` ms between writes
-      const auto time_to_wait_ms = display_write_interval_ms - milliseconds_since_last_write;
-      Serial.println("Display is not ready to print!, wait " + String(time_to_wait_ms) +
-                     " more milliseconds");
-      return;
-    }
     Serial.println("Display is ready to print");
 
     display.clearBuffer();
@@ -164,7 +164,6 @@ public:
 
     Serial.println("Writing info to display...");
     display.display();
-    display_write_timestamp_ms_ = millis();
     Serial.println("Info written to display.");
   }
 };
@@ -181,18 +180,6 @@ mik::LightSensor light_sensor;
 mik::Display eink_display;
 using namespace mik;
 
-void wait_display_write_interval() {
-  Serial.println("Waiting for 3 min to protect display");
-  delay(minute_ms);
-  Serial.println("2 min left");
-  delay(minute_ms);
-  Serial.println("1 min left");
-  delay(minute_ms / 2);
-  Serial.println("30 sec left");
-  delay(minute_ms / 2);
-  Serial.println("Done waiting");
-}
-
 void setup() {
   Wire.begin(); // Init I2C
 
@@ -207,22 +194,19 @@ void setup() {
   humidity_sensor.setup();
   Serial.println("Set up humidity sensor.");
 
-  // light_sensor.setup();
-  // wait_display_write_interval();
+  light_sensor.setup();
+  Serial.println("Set up light sensor.");
 
   eink_display.setup(); // Display is cleared to during setup
+  Serial.println("Set up display sensor.");
 
-  Serial.println("end setup()");
+  Serial.println("setup done.");
 }
 
 void loop() {
-  static uint32_t loop_count = 0;
-  // Output may not always be available from the sensor, but they will be read from if so
-  Serial.println("Loop iteration: " + String(loop_count++));
 
-  // eink_display.update(humidity_sensor.read(), light_sensor.read());
-  eink_display.update(humidity_sensor.read(), Optional<float>());
+  eink_display.update(humidity_sensor.read(), light_sensor.read());
 
-  // Just delay regardless to avoid using more power than needed
-  delay(ten_seconds_ms);
+  // Just update every available interval, life is simpler that way
+  delay(display_write_interval_ms);
 }
