@@ -68,9 +68,11 @@ public:
       const auto moisture_percentage =
           map(constrained_range, measured_moisture_min, measured_moisture_max, 0, 100);
 
+      Serial.println(String("HumiditySensor has new value:") + String(moisture_percentage));
       return Optional<uint32_t>(moisture_percentage);
     } else {
       // Sensor was read too recently
+      Serial.println("HumiditySensor doesn't have new value!");
       return Optional<uint32_t>();
     }
   }
@@ -82,8 +84,10 @@ public:
 class LightSensor {
 public:
   void setup() {
+    delay(100); // Light sensor is a bit finicky with startup
     if (lightMeter.begin(BH1750_TO_GROUND)) {
       lightMeter.calibrateTiming();
+      lightMeter.start();
     } else {
       Serial.println("Light meter wasn't ready!");
     }
@@ -91,8 +95,12 @@ public:
 
   Optional<float> read() {
     if (lightMeter.hasValue()) {
-      return Optional<float>(lightMeter.getLux());
+      const auto value = lightMeter.getLux();
+      Serial.println(String("LightSensor has new value: ") + String(value));
+      lightMeter.start();
+      return Optional<float>(value);
     } else {
+      Serial.println("LightSensor doesn't have new value!");
       return Optional<float>();
     }
   }
@@ -143,23 +151,39 @@ public:
     Serial.println("Display is ready to print");
 
     display.clearBuffer();
+    Serial.println("Cleared buffer");
     display.setTextColor(EPD_BLACK);
     display.setTextWrap(true);
     display.setCursor(init_msg_display_x, init_msg_display_y);
-    display.print("plantmon");
+    display.print("Plantmon");
 
     {
-      last_moisture_percentage_ = moisture_percentage.value_or(last_moisture_percentage_);
       display.setCursor(humidity_display_x, humidity_display_y);
-      const auto text = String("Moisture: " + String(last_moisture_percentage_) + "%");
-      display.print(text);
+      static bool first_moist_written = false;
+      if (first_moist_written && !moisture_percentage.has_value()) {
+        display.print(String("Moisture:   %"));
+      } else {
+        // A value can be written or a valid value is already there
+        last_moisture_percentage_ = moisture_percentage.value_or(last_moisture_percentage_);
+        display.print(String("Moisture: " + String(last_moisture_percentage_) + "%"));
+        first_moist_written = true;
+      }
     }
 
     {
-      last_lux_ = lux.value_or(last_lux_);
       display.setCursor(light_display_x, light_display_y);
-      const auto text = String("Light: " + String(lux.value()) + " lux");
-      display.print(text);
+
+      static bool first_lux_written = false;
+      if (first_lux_written && !lux.has_value()) {
+        // On first iteration, don't print anything until we've measured something
+        const auto text = String("Light:      lux");
+        display.print(String("Light:      lux"));
+      } else {
+        // A value can be written or a valid value is already there
+        last_lux_ = lux.value_or(last_lux_);
+        display.print(String("Light: " + String(lux.value()) + " lux"));
+        first_lux_written = true;
+      }
     }
 
     Serial.println("Writing info to display...");
@@ -205,8 +229,22 @@ void setup() {
 
 void loop() {
 
-  eink_display.update(humidity_sensor.read(), light_sensor.read());
-
   // Just update every available interval, life is simpler that way
-  delay(display_write_interval_ms);
+  Serial.println(String("Waiting for display to be ready for writing..."));
+  // TODO Update time left every 30 seconds
+  constexpr auto loopIntervalMs = 30 * second_ms;
+  // Wait for total of <display_write_interval_ms> ms
+  auto loopsToWait = display_write_interval_ms / loopIntervalMs;
+
+  while (loopsToWait > 0) {
+    const auto timeLeftMs = loopsToWait * loopIntervalMs;
+    const auto timeLeftSec = timeLeftMs / 1000;
+    Serial.println(String(timeLeftSec) + String(" seconds left..."));
+    delay(loopIntervalMs);
+    loopsToWait -= 1;
+  }
+
+  Serial.println("Waiting done.");
+
+  eink_display.update(humidity_sensor.read(), light_sensor.read());
 }

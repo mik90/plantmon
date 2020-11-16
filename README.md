@@ -19,6 +19,7 @@ Connect with I2C
 - SCL/SDL from Nano
 
 BH1750 [product page](https://www.adafruit.com/product/4681)  
+Asafruit pinout [guide](https://learn.adafruit.com/adafruit-bh1750-ambient-light-sensor/pinouts)  
 Arduino C++ Library: [hp_BH1750](https://github.com/Starmbi/hp_BH1750)  
 
 #### Display
