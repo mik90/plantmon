@@ -13,11 +13,6 @@ Connect with D6 and A6
 
 #### Light sensor
 Connect with I2C  
-*TODO*: How to wire this up? There's not many pins left  
-- Share ground w/ the soil moisture sensor?
-- VIN from the eInk display
-- SCL/SDL from Nano
-
 BH1750 [product page](https://www.adafruit.com/product/4681)  
 Asafruit pinout [guide](https://learn.adafruit.com/adafruit-bh1750-ambient-light-sensor/pinouts)  
 Arduino C++ Library: [hp_BH1750](https://github.com/Starmbi/hp_BH1750)  
@@ -27,3 +22,6 @@ Connect with SPI
 eInk display [product page](https://www.adafruit.com/product/4086)  
 Pinout guide [here](https://learn.adafruit.com/adafruit-eink-display-breakouts/pinouts)  
 Arduino C++ Library: [Adafruit EPD](https://github.com/adafruit/Adafruit_EPD)  
+
+#### TODO
+- Write out date and time in EST

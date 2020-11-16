@@ -123,14 +123,14 @@ private:
    *
    */
 
-  static constexpr int16_t init_msg_display_x = 1;
-  static constexpr int16_t init_msg_display_y = 1;
+  static constexpr int16_t init_msg_display_x = 3;
+  static constexpr int16_t init_msg_display_y = 3;
 
-  static constexpr int16_t humidity_display_x = 1;
-  static constexpr int16_t humidity_display_y = 37;
+  static constexpr int16_t humidity_display_x = init_msg_display_x;
+  static constexpr int16_t humidity_display_y = init_msg_display_y + 36;
 
-  static constexpr int16_t light_display_x = 1;
-  static constexpr int16_t light_display_y = 73;
+  static constexpr int16_t light_display_x = humidity_display_x;
+  static constexpr int16_t light_display_y = humidity_display_y + 36;
 
   uint32_t last_moisture_percentage_ = 0;
   float last_lux_ = 0.0f;
@@ -148,7 +148,7 @@ public:
    * @brief Display gets updated here along with delaying for the recommended interval
    */
   void update(Optional<uint32_t> moisture_percentage, Optional<float> lux) {
-    Serial.println("Display is ready to print");
+    Serial.println("\nDisplay is ready to print");
 
     display.clearBuffer();
     Serial.println("Cleared buffer");
@@ -176,7 +176,6 @@ public:
       static bool first_lux_written = false;
       if (first_lux_written && !lux.has_value()) {
         // On first iteration, don't print anything until we've measured something
-        const auto text = String("Light:      lux");
         display.print(String("Light:      lux"));
       } else {
         // A value can be written or a valid value is already there
@@ -188,7 +187,7 @@ public:
 
     Serial.println("Writing info to display...");
     display.display();
-    Serial.println("Info written to display.");
+    Serial.println("Info written to display.\n");
   }
 };
 
