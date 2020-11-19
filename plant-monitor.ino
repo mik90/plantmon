@@ -28,28 +28,22 @@ hp_BH1750 lightMeter;
  */
 class HumiditySensor {
 private:
-  static constexpr long humidity_read_interval_ms = 500;
   /**
    * @brief blocks for 500ms
    */
   uint32_t read_raw() {
     digitalWrite(humidity_sensor_vcc, HIGH);
-    delay(humidity_read_interval_ms);
+    delay(500);
     const uint32_t value = analogRead(humidity_sensor_pin);
     digitalWrite(humidity_sensor_vcc, LOW);
     return 1023U - value;
   }
-
-  /// @brief Last time that the sensor was read using millis()
-  unsigned long sensor_read_timestamp_ms_;
 
 public:
   void setup() {
     // Init the humidity sensor board
     pinMode(humidity_sensor_vcc, OUTPUT);
     digitalWrite(humidity_sensor_vcc, LOW);
-    // Technically didn't read from it, but meh
-    sensor_read_timestamp_ms_ = 0;
   }
   // Soil moisture range
   static constexpr uint32_t measured_moisture_min = 120; // Measured in air (dry)
@@ -57,24 +51,20 @@ public:
 
   /**
    * @brief Get moisture percentage if available
+   * @details This isn't supposed to be read from more than every 10ms, but since dispaly intervals
+   *          are every 3 minutes, it doesn't matter.
    */
   Optional<uint32_t> read() {
-    if (millis() - sensor_read_timestamp_ms_ < ten_seconds_ms) {
-      const auto unadjusted_range = read_raw();
-      // Limit values between the measaured range just to be sure
-      const auto constrained_range =
-          constrain(unadjusted_range, measured_moisture_min, measured_moisture_max);
-      // Map the range to a percentage
-      const auto moisture_percentage =
-          map(constrained_range, measured_moisture_min, measured_moisture_max, 0, 100);
+    const auto unadjusted_range = read_raw();
+    // Limit values between the measaured range just to be sure
+    const auto constrained_range =
+        constrain(unadjusted_range, measured_moisture_min, measured_moisture_max);
+    // Map the range to a percentage
+    const auto moisture_percentage =
+        map(constrained_range, measured_moisture_min, measured_moisture_max, 0, 100);
 
-      Serial.println(String("HumiditySensor has new value:") + String(moisture_percentage));
-      return Optional<uint32_t>(moisture_percentage);
-    } else {
-      // Sensor was read too recently
-      Serial.println("HumiditySensor doesn't have new value!");
-      return Optional<uint32_t>();
-    }
+    Serial.println(String("HumiditySensor has new value:") + String(moisture_percentage));
+    return Optional<uint32_t>(moisture_percentage);
   }
 };
 
@@ -113,7 +103,7 @@ private:
    *
    *  Looks somewhat like this:
    *  -----------------------------------------
-   *  | Plantmon                              |
+   *  | Plantmon /                            |
    *  |                                       |
    *  | Moisture: 0%                          |
    *  |                                       |
@@ -134,6 +124,17 @@ private:
 
   uint32_t last_moisture_percentage_ = 0;
   float last_lux_ = 0.0f;
+  const String loading_symbols{"|/-\\"};
+  unsigned int cur_loading_symbol_idx = 0;
+  const unsigned int max_loading_symbol_idx = loading_symbols.length() - 1;
+
+  char get_next_loading_symbol() {
+    if (cur_loading_symbol_idx > max_loading_symbol_idx) {
+      // Don't overrun the loading symbols String[]
+      cur_loading_symbol_idx = 0;
+    }
+    return loading_symbols.charAt(cur_loading_symbol_idx++);
+  }
 
 public:
   void setup() {
@@ -155,7 +156,7 @@ public:
     display.setTextColor(EPD_BLACK);
     display.setTextWrap(true);
     display.setCursor(init_msg_display_x, init_msg_display_y);
-    display.print("Plantmon");
+    display.print(String("Plantmon ") + String(get_next_loading_symbol()));
 
     {
       display.setCursor(humidity_display_x, humidity_display_y);
@@ -206,9 +207,6 @@ using namespace mik;
 void setup() {
   Wire.begin(); // Init I2C
 
-  while (!Serial) {
-    // Wait for serial to be ready
-  }
   delay(second_ms);
   Serial.begin(baud_rate);
 
