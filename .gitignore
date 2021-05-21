@@ -32,3 +32,5 @@
 *.app
 
 build/
+
+wifi_secret.hpp

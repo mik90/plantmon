@@ -1,8 +1,11 @@
 #include "Optional.hpp"
+#include "wifi_secret.hpp"
 #include <Adafruit_EPD.h>
 #include <Arduino.h>
+#include <WiFiNINA.h>
 #include <Wire.h>
 #include <hp_BH1750.h>
+
 namespace mik {
 
 constexpr byte humidity_sensor_pin = A1;
@@ -122,6 +125,8 @@ private:
   static constexpr int16_t light_display_x = humidity_display_x;
   static constexpr int16_t light_display_y = humidity_display_y + 36;
 
+  bool wifi_connected_ = false;
+
   uint32_t last_moisture_percentage_ = 0;
   float last_lux_ = 0.0f;
   const String loading_symbols{"|/-\\"};
@@ -190,6 +195,8 @@ public:
     display.display();
     Serial.println("Info written to display.\n");
   }
+
+  void setWifiConnected(bool wifi_connected) noexcept { wifi_connected_ = wifi_connected_; }
 };
 
 } // namespace mik
@@ -202,11 +209,14 @@ public:
 mik::HumiditySensor humidity_sensor;
 mik::LightSensor light_sensor;
 mik::Display eink_display;
+int wifi_status = WL_IDLE_STATUS;
 using namespace mik;
 
+/**
+ * @brief periphial setup
+ */
 void setup() {
   Wire.begin(); // Init I2C
-
   delay(second_ms);
   Serial.begin(baud_rate);
 
@@ -221,10 +231,36 @@ void setup() {
   eink_display.setup(); // Display is cleared to during setup
   Serial.println("Set up display sensor.");
 
+  // Set up wifi
+  if (WiFi.status() == WL_NO_MODULE) {
+    Serial.println("Communication with wifi module failed!");
+  }
+
+  if (WiFi.firmwareVersion() < WIFI_FIRMWARE_LATEST_VERSION) {
+    Serial.println("Please upgrade the wifi firmware");
+  }
+
+  Serial.print("Attempting to connect to WPA SSID: ");
+  Serial.println(ssid);
+  const auto status = WiFi.begin(ssid, pass);
+  if (status != WL_CONNECTED) {
+    // Do wifi things
+    Serial.print("Could not connect to WiFi, status:");
+    Serial.println(status);
+  }
+
   Serial.println("setup done.");
 }
 
+/**
+ * @brief event loop
+ */
 void loop() {
+  if (WiFi.status() == WL_CONNECTED) {
+    // Do wifi things
+
+    /// @todo Send twitter info to raspberry pi or somewhere else
+  }
 
   // Just update every available interval, life is simpler that way
   Serial.println(String("Waiting for display to be ready for writing..."));

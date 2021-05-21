@@ -23,5 +23,19 @@ eInk display [product page](https://www.adafruit.com/product/4086)
 Pinout guide [here](https://learn.adafruit.com/adafruit-eink-display-breakouts/pinouts)  
 Arduino C++ Library: [Adafruit EPD](https://github.com/adafruit/Adafruit_EPD)  
 
-#### TODO
-- Write out date and time in EST
+#### Wifi
+WifiNina library [here](https://github.com/arduino-libraries/WiFiNINA)
+
+#### Time
+Time library [here](https://github.com/PaulStoffregen/Time)
+
+### Tasklist
+- [x] Use WifiNINA to talk to the interwebs
+- [ ] Write out date and time in EST
+- [ ] Tweet at roommate when the plant is dry
+    - should i forward this to another device or sent it directly to twitter's API?
+    - Create status-forwarder as a haskell project
+
+### status-mon
+Haskell program that forwarder plantmon statuses to twitter
+Dev container setup is based on https://github.com/hmemcpy/haskell-hie-devcontainer
