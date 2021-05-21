@@ -1,4 +1,4 @@
-### Plant-monitor
+## plant-mon
 Prints out the soil moisture percentage and amount of light (lux) to an e-ink display
 
 #### Controller
@@ -31,11 +31,12 @@ Time library [here](https://github.com/PaulStoffregen/Time)
 
 ### Tasklist
 - [x] Use WifiNINA to talk to the interwebs
+- [ ] Tweet at myself when the plant is dry
+    - [ ] Refer to twitter-conduit examples on how to use it. Just send test data
+    - [ ] Use either protobuf or something simple to communicate between arduino and Pi/Haskell
+      - nanopb might be useful for arduino if using protobuf
+      - json would be best, or maybe some hard-coded format that i can make without a dependency
 - [ ] Write out date and time in EST
-- [ ] Tweet at roommate when the plant is dry
-    - should i forward this to another device or sent it directly to twitter's API?
-    - Create status-forwarder as a haskell project
 
-### status-mon
-Haskell program that forwarder plantmon statuses to twitter
-Dev container setup is based on https://github.com/hmemcpy/haskell-hie-devcontainer
+## status-mon
+Haskell program that forwarder plantmon statuses to twitter using twitter-conduit
